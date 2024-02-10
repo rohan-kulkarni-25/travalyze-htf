@@ -3,6 +3,7 @@ dotenv.config();
 const express = require("express");
 const axios = require("axios");
 const { default: OpenAI } = require("openai");
+const { getTravelInfo } = require("./getInformation");
 
 const app = express();
 
@@ -11,14 +12,28 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_KEY,
 });
 
+// API Endpoint for Get All Real Time Information.
+app.get("/get-info", async (req, res) => {
+  const response = await getTravelInfo();
+  console.log("Response : ", response);
+  res.json({
+    message: "Sucess !",
+    data: response,
+  });
+});
+
 // Define API endpoint for itinerary generation
 app.get("/plan", async (req, res) => {
   const { destination, duration } = req.body;
 
   try {
     // Fetch weather forecast for the destination
-    const weatherForecast = await fetchWeatherForecast(destination);
+    // const weatherForecast = await fetchWeatherForecast(destination);
 
+    const getTravelInfo = await getTravelInfo({
+      destination: "Pune",
+      from: "Mumbai",
+    });
     // Generate travel recommendations using OpenAI (dummy response for now)
     const recommendations = generateTravelRecommendations(
       destination,
@@ -56,10 +71,9 @@ async function generateTravelRecommendations(destination, duration) {
         },
       ],
       model: "gpt-3.5-turbo-0125",
-    //   response_format: { type: "json_object" },
     });
     console.log(completion.choices[0].message.content);
-    return completion.choices;
+    return completion.choices[0].message;
   } catch (error) {
     console.log(error);
     // throw new Error("Failed to generate travel recommendations");
